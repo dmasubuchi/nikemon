@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/workout_model.dart';
+import '../services/workout_storage_service.dart';
 
 class ResultScreen extends StatelessWidget {
   const ResultScreen({super.key, this.workout});
@@ -121,11 +122,28 @@ class ResultScreen extends StatelessWidget {
                 _buildActionButton(
                   Icons.save,
                   'SAVE',
-                  () {
+                  () async {
                     // Save workout to history
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Workout saved to history')),
-                    );
+                    if (workout != null) {
+                      // Capture context before async gap
+                      final scaffoldMessenger = ScaffoldMessenger.of(context);
+                      
+                      final storageService = WorkoutStorageService();
+                      final saved = await storageService.saveWorkout(workout!);
+                      
+                      // Use captured context reference
+                      scaffoldMessenger.showSnackBar(
+                        SnackBar(
+                          content: Text(saved 
+                            ? 'Workout saved to history' 
+                            : 'Failed to save workout'),
+                        ),
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('No workout data to save')),
+                      );
+                    }
                   },
                 ),
                 _buildActionButton(
