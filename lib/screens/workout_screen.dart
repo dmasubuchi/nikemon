@@ -9,8 +9,8 @@ class WorkoutScreen extends StatefulWidget {
 
 class _WorkoutScreenState extends State<WorkoutScreen> {
   bool _isRunning = false;
-  int _seconds = 0;
-  double _distance = 0.0;
+  final int _seconds = 0;
+  final double _distance = 0.0;
   
   @override
   Widget build(BuildContext context) {
