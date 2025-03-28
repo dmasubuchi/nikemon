@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import '../services/location_service.dart';
+import '../services/workout_tracker.dart';
+import 'result_screen.dart';
 
 class WorkoutScreen extends StatefulWidget {
   const WorkoutScreen({super.key});
@@ -11,14 +13,15 @@ class WorkoutScreen extends StatefulWidget {
 }
 
 class _WorkoutScreenState extends State<WorkoutScreen> {
-  bool _isRunning = false;
-  final int _seconds = 0;
-  final double _distance = 0.0;
-  
-  // Location service
+  // Services
   final LocationService _locationService = LocationService();
+  final WorkoutTracker _workoutTracker = WorkoutTracker();
+  
+  // State variables
+  bool _isRunning = false;
   Position? _currentPosition;
-  StreamSubscription<Position>? _positionStreamSubscription;
+  Timer? _timer;
+  int _seconds = 0;
   
   @override
   void initState() {
@@ -38,44 +41,76 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     });
   }
   
-  void _startLocationTracking() {
-    // Get position stream
-    final positionStream = _locationService.getPositionStream();
+  void _startWorkout() async {
+    // Start workout tracking
+    final success = await _workoutTracker.startWorkout();
     
-    if (positionStream != null) {
-      _positionStreamSubscription = positionStream.listen((Position position) {
-        // Print coordinates to console
-        debugPrint('Location update: ${position.latitude}, ${position.longitude}');
-        
-        // Update UI if mounted
-        if (!mounted) return;
-        
-        setState(() {
-          _currentPosition = position;
-          
-          // Calculate distance if previous position exists
-          if (_currentPosition != null && _isRunning) {
-            // Distance calculation would go here in a real app
-            // This is just a placeholder for now
-          }
-        });
+    if (success) {
+      // Start timer
+      _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+        if (mounted) {
+          setState(() {
+            _seconds++;
+          });
+        }
       });
+      
+      setState(() {
+        _isRunning = true;
+      });
+      
+      debugPrint('Workout started');
+    } else {
+      debugPrint('Failed to start workout');
     }
   }
   
-  void _stopLocationTracking() {
-    _positionStreamSubscription?.cancel();
-    _positionStreamSubscription = null;
+  void _pauseWorkout() {
+    // Pause timer
+    _timer?.cancel();
+    
+    setState(() {
+      _isRunning = false;
+    });
+    
+    debugPrint('Workout paused');
+  }
+  
+  void _stopWorkout() {
+    // Stop timer
+    _timer?.cancel();
+    _timer = null;
+    
+    // Stop workout tracking
+    final workout = _workoutTracker.stopWorkout();
+    
+    if (workout != null) {
+      debugPrint('Workout completed: ${workout.totalDistance.toStringAsFixed(2)} meters');
+      
+      // Navigate to result screen with workout data
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ResultScreen(workout: workout),
+        ),
+      );
+    }
   }
   
   @override
   void dispose() {
-    _stopLocationTracking();
+    _timer?.cancel();
+    _workoutTracker.stopWorkout();
     super.dispose();
   }
   
   @override
   Widget build(BuildContext context) {
+    // Get current stats from workout tracker
+    final distance = _workoutTracker.totalDistance;
+    final formattedPace = _workoutTracker.formattedPace;
+    final currentPosition = _workoutTracker.lastPosition ?? _currentPosition;
+    
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
@@ -85,6 +120,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: () {
+            _workoutTracker.stopWorkout();
             Navigator.pop(context);
           },
         ),
@@ -106,7 +142,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    '${_distance.toStringAsFixed(2)} KM',
+                    '${(distance / 1000).toStringAsFixed(2)} KM',
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 48,
@@ -117,47 +153,56 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      _buildStatColumn('PACE', '0\'00"'),
+                      _buildStatColumn('PACE', formattedPace),
                       _buildStatColumn('TIME', _formatTime(_seconds)),
-                      _buildStatColumn('CALORIES', '0'),
+                      _buildStatColumn('CALORIES', '${_calculateCalories(distance)}'),
                     ],
                   ),
                   const SizedBox(height: 40),
-                  // Display current location
-                  if (_currentPosition != null)
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[800],
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Column(
-                        children: [
-                          const Text(
-                            'CURRENT LOCATION',
-                            style: TextStyle(
-                              color: Colors.grey,
-                              fontSize: 12,
-                            ),
+                  // Display route info
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[800],
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Column(
+                      children: [
+                        const Text(
+                          'ROUTE TRACKING',
+                          style: TextStyle(
+                            color: Colors.grey,
+                            fontSize: 12,
                           ),
+                        ),
+                        const SizedBox(height: 5),
+                        Text(
+                          'Points: ${_workoutTracker.route.length}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                          ),
+                        ),
+                        if (currentPosition != null) ...[
                           const SizedBox(height: 5),
                           Text(
-                            'LAT: ${_currentPosition!.latitude.toStringAsFixed(6)}',
+                            'LAT: ${currentPosition.latitude.toStringAsFixed(6)}',
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 12,
                             ),
                           ),
                           Text(
-                            'LNG: ${_currentPosition!.longitude.toStringAsFixed(6)}',
+                            'LNG: ${currentPosition.longitude.toStringAsFixed(6)}',
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 12,
                             ),
                           ),
                         ],
-                      ),
+                      ],
                     ),
+                  ),
                 ],
               ),
             ),
@@ -172,20 +217,14 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                         Icons.pause,
                         Colors.white,
                         () {
-                          setState(() {
-                            _isRunning = false;
-                            _stopLocationTracking();
-                          });
+                          _pauseWorkout();
                         },
                       )
                     : _buildControlButton(
                         Icons.play_arrow,
                         Colors.green,
                         () {
-                          setState(() {
-                            _isRunning = true;
-                            _startLocationTracking();
-                          });
+                          _startWorkout();
                         },
                       ),
                 const SizedBox(width: 20),
@@ -193,8 +232,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                   Icons.stop,
                   Colors.red,
                   () {
-                    _stopLocationTracking();
-                    Navigator.pushReplacementNamed(context, '/result');
+                    _stopWorkout();
                   },
                 ),
               ],
@@ -248,5 +286,10 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     final minutes = seconds ~/ 60;
     final remainingSeconds = seconds % 60;
     return '$minutes:${remainingSeconds.toString().padLeft(2, '0')}';
+  }
+  
+  int _calculateCalories(double distanceInMeters) {
+    // Simple estimation: 1 km running burns about 60 calories
+    return ((distanceInMeters / 1000) * 60).round();
   }
 }
