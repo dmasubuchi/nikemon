@@ -16,10 +16,10 @@
 
 ## iOSの設定
 
-1. `ios/Runner/Info.plist`にAPIキーを設定します：
+1. `ios/Runner/Info.plist`にAPIキーを環境変数として設定します：
    ```xml
    <key>GoogleMapsAPIKey</key>
-   <string>YOUR_API_KEY_HERE</string>
+   <string>$(MAPS_API_KEY)</string>
    ```
 
 2. `ios/Podfile`にGoogle Maps SDKを追加します：
@@ -41,11 +41,11 @@
 
 ## Androidの設定
 
-1. `android/app/src/main/AndroidManifest.xml`にAPIキーを設定します：
+1. `android/app/src/main/AndroidManifest.xml`にAPIキーを環境変数として設定します：
    ```xml
    <meta-data
        android:name="com.google.android.geo.API_KEY"
-       android:value="YOUR_API_KEY_HERE" />
+       android:value="${MAPS_API_KEY}" />
    ```
 
 2. `android/local.properties`ファイルで環境変数を設定することもできます：
