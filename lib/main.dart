@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'screens/workout_screen.dart';
+import 'screens/home_screen.dart';
 
 void main() => runApp(const NikeApp());
 
@@ -12,9 +12,19 @@ class NikeApp extends StatelessWidget {
       title: 'Nike+ Clone',
       theme: ThemeData(
         primaryColor: Colors.black,
-        scaffoldBackgroundColor: Colors.white,
+        scaffoldBackgroundColor: Colors.black,
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Colors.black,
+          foregroundColor: Colors.white,
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.white,
+            foregroundColor: Colors.black,
+          ),
+        ),
       ),
-      home: const WorkoutScreen(),
+      home: const HomeScreen(),
     );
   }
 }

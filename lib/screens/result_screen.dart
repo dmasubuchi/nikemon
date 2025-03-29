@@ -1,115 +1,170 @@
 import 'package:flutter/material.dart';
 import '../models/workout_model.dart';
+import '../services/workout_storage_service.dart';
 
 class ResultScreen extends StatelessWidget {
-  const ResultScreen({super.key, this.workout});
+  const ResultScreen({super.key, required this.workout});
   
-  final WorkoutModel? workout;
+  final WorkoutModel workout;
 
   @override
   Widget build(BuildContext context) {
-    // Sample workout data for testing
-    final testWorkout = workout ?? WorkoutModel(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      startTime: DateTime.now().subtract(const Duration(minutes: 30)),
-      endTime: DateTime.now(),
-      route: [],
-      totalDistance: 4200, // 4.2 km
-      duration: const Duration(minutes: 30),
-    );
+    // Format date for display
+    final date = workout.startTime.toLocal();
+    final formattedDate = '${_getMonthAbbreviation(date.month)} ${date.day}, ${date.year}';
     
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.black,
         foregroundColor: Colors.white,
-        title: const Text('Workout Complete'),
-        automaticallyImplyLeading: false,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.close),
-            onPressed: () {
-              Navigator.pushReplacementNamed(context, '/');
-            },
-          ),
-        ],
+        title: const Text('Workout Summary'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
       ),
       body: Column(
         children: [
           Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text(
-                    'DISTANCE',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Date display
+                    Text(
+                      formattedDate,
+                      style: const TextStyle(
+                        color: Colors.grey,
+                        fontSize: 16,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    '${(testWorkout.totalDistance / 1000).toStringAsFixed(2)} KM',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 48,
-                      fontWeight: FontWeight.bold,
+                    const SizedBox(height: 20),
+                    
+                    // Distance display
+                    const Text(
+                      'DISTANCE',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 40),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      _buildStatColumn('PACE', testWorkout.formattedPace),
-                      _buildStatColumn('TIME', _formatDuration(testWorkout.duration)),
-                      _buildStatColumn('CALORIES', '${testWorkout.caloriesBurned}'),
-                    ],
-                  ),
-                  const SizedBox(height: 40),
-                  Container(
-                    padding: const EdgeInsets.all(15),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[800],
-                      borderRadius: BorderRadius.circular(8),
+                    const SizedBox(height: 10),
+                    Text(
+                      '${(workout.totalDistance / 1000).toStringAsFixed(2)} KM',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 48,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                    child: Column(
+                    const SizedBox(height: 40),
+                    
+                    // Stats row
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        const Text(
-                          'ROUTE SUMMARY',
-                          style: TextStyle(
-                            color: Colors.grey,
-                            fontSize: 14,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        Text(
-                          'GPS Points: ${testWorkout.route.length}',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                          ),
-                        ),
-                        const SizedBox(height: 5),
-                        Text(
-                          'Started: ${_formatDateTime(testWorkout.startTime)}',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                          ),
-                        ),
-                        Text(
-                          'Ended: ${_formatDateTime(testWorkout.endTime)}',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                          ),
-                        ),
+                        _buildStatColumn('PACE', workout.formattedPace),
+                        _buildStatColumn('TIME', _formatDuration(workout.duration)),
+                        _buildStatColumn('CALORIES', '${workout.caloriesBurned}'),
                       ],
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 40),
+                    
+                    // Route summary
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(15),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[800],
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'ROUTE SUMMARY',
+                            style: TextStyle(
+                              color: Colors.grey,
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 15),
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.location_on,
+                                color: Colors.white,
+                                size: 18,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'GPS Points: ${workout.route.length}',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.play_circle_outline,
+                                color: Colors.white,
+                                size: 18,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Started: ${_formatDateTime(workout.startTime)}',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.stop_circle_outlined,
+                                color: Colors.white,
+                                size: 18,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Ended: ${_formatDateTime(workout.endTime)}',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 15),
+                          const Center(
+                            child: Text(
+                              'Route map will be available in future updates',
+                              style: TextStyle(
+                                color: Colors.grey,
+                                fontSize: 12,
+                                fontStyle: FontStyle.italic,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -121,10 +176,21 @@ class ResultScreen extends StatelessWidget {
                 _buildActionButton(
                   Icons.save,
                   'SAVE',
-                  () {
+                  () async {
+                    // Capture context before async gap
+                    final scaffoldMessenger = ScaffoldMessenger.of(context);
+                    
                     // Save workout to history
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Workout saved to history')),
+                    final storageService = WorkoutStorageService();
+                    final saved = await storageService.saveWorkout(workout);
+                    
+                    // Use captured context reference
+                    scaffoldMessenger.showSnackBar(
+                      SnackBar(
+                        content: Text(saved 
+                          ? 'Workout saved to history' 
+                          : 'Failed to save workout'),
+                      ),
                     );
                   },
                 ),
@@ -189,6 +255,17 @@ class ResultScreen extends StatelessWidget {
   }
   
   String _formatDateTime(DateTime dateTime) {
-    return '${dateTime.hour}:${dateTime.minute.toString().padLeft(2, '0')}';
+    final hour = dateTime.hour > 12 ? dateTime.hour - 12 : (dateTime.hour == 0 ? 12 : dateTime.hour);
+    final minute = dateTime.minute.toString().padLeft(2, '0');
+    final period = dateTime.hour >= 12 ? 'PM' : 'AM';
+    return '$hour:$minute $period';
+  }
+  
+  String _getMonthAbbreviation(int month) {
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ];
+    return months[month - 1];
   }
 }
