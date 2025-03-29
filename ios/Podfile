@@ -30,9 +30,12 @@ flutter_ios_podfile_setup
 target 'Runner' do
   use_frameworks!
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
   
   pod 'GoogleMaps'  # GoogleMaps SDKを明示的に追加
 =======
+=======
+>>>>>>> Stashed changes
   pod 'GoogleMaps'
 
 >>>>>>> Stashed changes
