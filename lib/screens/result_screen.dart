@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../models/workout_model.dart';
 import '../services/workout_storage_service.dart';
 
@@ -75,6 +76,20 @@ class ResultScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 40),
                     
+                    // Route Map
+                    Container(
+                      width: double.infinity,
+                      height: 300,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: _buildRouteMap(),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    
                     // Route summary
                     Container(
                       width: double.infinity,
@@ -147,18 +162,6 @@ class ResultScreen extends StatelessWidget {
                                 ),
                               ),
                             ],
-                          ),
-                          const SizedBox(height: 15),
-                          const Center(
-                            child: Text(
-                              'Route map will be available in future updates',
-                              style: TextStyle(
-                                color: Colors.grey,
-                                fontSize: 12,
-                                fontStyle: FontStyle.italic,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
                           ),
                         ],
                       ),
@@ -267,5 +270,50 @@ class ResultScreen extends StatelessWidget {
       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
     ];
     return months[month - 1];
+  }
+  
+  Widget _buildRouteMap() {
+    // Convert route to LatLng list for Google Maps
+    final latLngRoute = workout.toLatLngList();
+    
+    // Default to Tokyo if no route points available
+    final initialPosition = latLngRoute.isNotEmpty 
+        ? latLngRoute.first 
+        : const LatLng(35.6812, 139.7671); // Tokyo coordinates as fallback
+    
+    return GoogleMap(
+      initialCameraPosition: CameraPosition(
+        target: initialPosition,
+        zoom: 15.0,
+      ),
+      polylines: {
+        Polyline(
+          polylineId: const PolylineId('workout_route'),
+          color: Colors.blue,
+          width: 4,
+          points: latLngRoute,
+        ),
+      },
+      markers: {
+        if (latLngRoute.isNotEmpty)
+          Marker(
+            markerId: const MarkerId('start_point'),
+            position: latLngRoute.first,
+            infoWindow: const InfoWindow(title: 'Start'),
+            icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
+          ),
+        if (latLngRoute.length > 1)
+          Marker(
+            markerId: const MarkerId('end_point'),
+            position: latLngRoute.last,
+            infoWindow: const InfoWindow(title: 'Finish'),
+            icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+          ),
+      },
+      myLocationEnabled: false,
+      zoomControlsEnabled: true,
+      compassEnabled: true,
+      mapType: MapType.normal,
+    );
   }
 }
