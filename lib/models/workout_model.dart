@@ -87,12 +87,14 @@ class WorkoutModel {
       route: (json['route'] as List).map((positionJson) => Position(
         latitude: positionJson['latitude'],
         longitude: positionJson['longitude'],
-        timestamp: DateTime.parse(positionJson['timestamp']),
-        accuracy: positionJson['accuracy'],
-        altitude: positionJson['altitude'],
-        heading: positionJson['heading'],
-        speed: positionJson['speed'],
-        speedAccuracy: positionJson['speedAccuracy'],
+        timestamp: positionJson['timestamp'] != null 
+            ? DateTime.parse(positionJson['timestamp']) 
+            : DateTime.now(),
+        accuracy: positionJson['accuracy'] ?? 0.0,
+        altitude: positionJson['altitude'] ?? 0.0,
+        heading: positionJson['heading'] ?? 0.0,
+        speed: positionJson['speed'] ?? 0.0,
+        speedAccuracy: positionJson['speedAccuracy'] ?? 0.0,
         altitudeAccuracy: 0.0,
         headingAccuracy: 0.0,
       )).toList(),

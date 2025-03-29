@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import '../services/location_service.dart';
 import '../services/workout_tracker.dart';
+import '../services/workout_storage_service.dart';
 import 'result_screen.dart';
 
 class WorkoutScreen extends StatefulWidget {
@@ -76,7 +77,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     debugPrint('Workout paused');
   }
   
-  void _stopWorkout() {
+  void _stopWorkout() async {
     // Stop timer
     _timer?.cancel();
     _timer = null;
@@ -86,6 +87,19 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     
     if (workout != null) {
       debugPrint('Workout completed: ${workout.totalDistance.toStringAsFixed(2)} meters');
+      
+      // Save workout to local storage
+      final storageService = WorkoutStorageService();
+      final saved = await storageService.saveWorkout(workout);
+      
+      if (saved) {
+        debugPrint('Workout saved to local storage');
+      } else {
+        debugPrint('Failed to save workout to local storage');
+      }
+      
+      // Check if widget is still mounted after async operation
+      if (!mounted) return;
       
       // Navigate to result screen with workout data
       Navigator.pushReplacement(
