@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'screens/home_screen.dart';
+import 'screens/workout_screen.dart';
+import 'screens/result_screen.dart';
+import 'screens/history_screen.dart';
 import 'screens/settings_screen.dart';
 import 'utils/debug_state.dart';
 
@@ -34,6 +37,9 @@ class NikeApp extends StatelessWidget {
       initialRoute: '/',
       routes: {
         '/': (context) => const HomeScreen(),
+        '/workout': (context) => const WorkoutScreen(),
+        '/result': (context) => const ResultScreen(),
+        '/history': (context) => const HistoryScreen(),
         '/settings': (context) => const SettingsScreen(),
       },
     );

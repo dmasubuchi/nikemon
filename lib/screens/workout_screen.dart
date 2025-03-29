@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import '../services/location_service.dart';
 import '../services/workout_tracker.dart';
+import '../services/workout_storage_service.dart';
 import 'result_screen.dart';
 
 class WorkoutScreen extends StatefulWidget {
@@ -133,53 +134,21 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
   }
 
   void _stopWorkout() {
-    setState(() {
-      _isLoading = true;
-    });
+    // Stop timer
+    _timer?.cancel();
+    _timer = null;
 
-    try {
-      // Stop timer
-      _timer?.cancel();
-      _timer = null;
+    // Stop workout tracking
+    final workout = _workoutTracker.stopWorkout();
 
-      // Stop workout tracking
-      final workout = _workoutTracker.stopWorkout();
+    if (workout != null) {
+      debugPrint('Workout completed: ${workout.totalDistance.toStringAsFixed(2)} meters');
 
-      if (!mounted) return;
-
-      if (workout != null) {
-        // Navigate to result screen with workout data
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ResultScreen(workout: workout),
-          ),
-        );
-      } else {
-        setState(() {
-          _isLoading = false;
-        });
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content:
-                Text('No workout data to save. Try starting a new workout.'),
-            backgroundColor: Colors.orange,
-          ),
-        );
-      }
-    } catch (e) {
-      // Handle any exceptions
-      if (!mounted) return;
-
-      setState(() {
-        _isLoading = false;
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error stopping workout: ${e.toString()}'),
-          backgroundColor: Colors.red,
+      // Navigate to result screen with workout data
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ResultScreen(workout: workout),
         ),
       );
     }
