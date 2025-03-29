@@ -14,6 +14,7 @@ A small-scale production app inspired by Nike+, built for health and fitness tra
 
 - [Mac M1 Setup Guide (English)](docs/mac_m1_setup_guide_en.md) - Complete setup instructions for Mac M1 machines, including Flutter installation, Google Maps API configuration, and testing procedures.
 - [Mac M1 セットアップガイド (日本語)](docs/mac_m1_setup_guide_ja.md) - Mac M1マシン向けの完全なセットアップ手順（Flutter環境構築、Google Maps API設定、テスト手順を含む）。
+- [Google Maps Setup Guide](docs/google_maps_setup_guide.md) - Instructions for configuring Google Maps API keys for both iOS and Android platforms.
 - [Development Steps](docs/development_steps.md) - Detailed overview of the 10-step development process used to build this application.
 
 ## Development Constraints
