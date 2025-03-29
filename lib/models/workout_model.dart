@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:geolocator/geolocator.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class WorkoutModel {
   final String id;
@@ -101,5 +102,12 @@ class WorkoutModel {
   // Create WorkoutModel from JSON string
   factory WorkoutModel.fromJsonString(String jsonString) {
     return WorkoutModel.fromJson(jsonDecode(jsonString));
+  }
+}
+
+// Extension to convert Position objects to LatLng objects for Google Maps
+extension RouteConversion on WorkoutModel {
+  List<LatLng> toLatLngList() {
+    return route.map((p) => LatLng(p.latitude, p.longitude)).toList();
   }
 }
