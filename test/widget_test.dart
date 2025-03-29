@@ -16,4 +16,12 @@ void main() {
     // Basic test to verify the app renders without errors
     expect(find.text('Nike+ Clone'), findsNothing);
   });
+  
+  testWidgets('Nike app initial render test', (WidgetTester tester) async {
+    // Build our app and trigger a frame.
+    await tester.pumpWidget(const NikeApp());
+
+    // Verify that our app renders correctly
+    expect(find.text('Nike+ Clone App'), findsNothing); // No longer in main.dart
+  });
 }

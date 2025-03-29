@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'workout_screen.dart';
 import 'history_screen.dart';
+import 'settings_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -16,12 +17,14 @@ class _HomeScreenState extends State<HomeScreen> {
   final List<Widget> _screens = [
     const WorkoutScreen(),
     const HistoryScreen(),
+    const SettingsScreen(),
   ];
   
   // Screen titles
   final List<String> _titles = [
     'Workout',
     'History',
+    'Settings',
   ];
   
   void _onItemTapped(int index) {
@@ -49,6 +52,10 @@ class _HomeScreenState extends State<HomeScreen> {
           BottomNavigationBarItem(
             icon: Icon(Icons.history),
             label: 'History',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.settings),
+            label: 'Settings',
           ),
         ],
         currentIndex: _selectedIndex,
