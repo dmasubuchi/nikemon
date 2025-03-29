@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:geolocator/geolocator.dart';
 
 class WorkoutModel {
@@ -44,5 +45,61 @@ class WorkoutModel {
   int get caloriesBurned {
     // Simple estimation: 1 km running burns about 60 calories
     return ((totalDistance / 1000) * 60).round();
+  }
+  
+  // Convert to JSON for storage
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'startTime': startTime.toIso8601String(),
+      'endTime': endTime.toIso8601String(),
+      'totalDistance': totalDistance,
+      'duration': duration.inSeconds,
+      'route': route.map((position) => {
+        'latitude': position.latitude,
+        'longitude': position.longitude,
+        'timestamp': position.timestamp.toIso8601String(),
+        'accuracy': position.accuracy,
+        'altitude': position.altitude,
+        'heading': position.heading,
+        'speed': position.speed,
+        'speedAccuracy': position.speedAccuracy,
+        'altitudeAccuracy': 0.0,
+        'headingAccuracy': 0.0,
+      }).toList(),
+    };
+  }
+  
+  // Create string representation for storage
+  String toJsonString() {
+    return jsonEncode(toJson());
+  }
+  
+  // Create WorkoutModel from JSON
+  factory WorkoutModel.fromJson(Map<String, dynamic> json) {
+    return WorkoutModel(
+      id: json['id'],
+      startTime: DateTime.parse(json['startTime']),
+      endTime: DateTime.parse(json['endTime']),
+      totalDistance: json['totalDistance'],
+      duration: Duration(seconds: json['duration']),
+      route: (json['route'] as List).map((positionJson) => Position(
+        latitude: positionJson['latitude'],
+        longitude: positionJson['longitude'],
+        timestamp: DateTime.parse(positionJson['timestamp']),
+        accuracy: positionJson['accuracy'],
+        altitude: positionJson['altitude'],
+        heading: positionJson['heading'],
+        speed: positionJson['speed'],
+        speedAccuracy: positionJson['speedAccuracy'],
+        altitudeAccuracy: 0.0,
+        headingAccuracy: 0.0,
+      )).toList(),
+    );
+  }
+  
+  // Create WorkoutModel from JSON string
+  factory WorkoutModel.fromJsonString(String jsonString) {
+    return WorkoutModel.fromJson(jsonDecode(jsonString));
   }
 }
