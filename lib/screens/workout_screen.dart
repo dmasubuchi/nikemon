@@ -17,90 +17,133 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
   // Services
   final LocationService _locationService = LocationService();
   final WorkoutTracker _workoutTracker = WorkoutTracker();
-  
+
   // State variables
   bool _isRunning = false;
+  bool _isLoading = false;
   Position? _currentPosition;
   Timer? _timer;
   int _seconds = 0;
-  
+
   @override
   void initState() {
     super.initState();
     _initLocationService();
   }
-  
+
   Future<void> _initLocationService() async {
-    // Get current position
-    final position = await _locationService.getCurrentPosition();
-    
-    // Update UI if mounted
-    if (!mounted) return;
-    
-    setState(() {
-      _currentPosition = position;
-    });
-  }
-  
-  void _startWorkout() async {
-    // Start workout tracking
-    final success = await _workoutTracker.startWorkout();
-    
-    if (success) {
-      // Start timer
-      _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-        if (mounted) {
-          setState(() {
-            _seconds++;
-          });
-        }
-      });
-      
+    try {
+      // Get current position
+      final position = await _locationService.getCurrentPosition();
+
+      // Update UI if mounted
+      if (!mounted) return;
+
       setState(() {
-        _isRunning = true;
+        _currentPosition = position;
       });
-      
-      debugPrint('Workout started');
-    } else {
-      debugPrint('Failed to start workout');
+    } catch (e) {
+      // Handle location errors
+      if (!mounted) return;
+
+      // Show user-friendly error message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString()),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 5),
+          action: SnackBarAction(
+            label: 'Settings',
+            textColor: Colors.white,
+            onPressed: () {
+              // Open app settings
+              Geolocator.openAppSettings();
+            },
+          ),
+        ),
+      );
     }
   }
-  
+
+  void _startWorkout() async {
+    // Set loading state
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // Start workout tracking
+      final success = await _workoutTracker.startWorkout();
+
+      // Check if widget is still mounted after async operation
+      if (!mounted) return;
+
+      if (success) {
+        // Start timer
+        _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+          if (mounted) {
+            setState(() {
+              _seconds++;
+            });
+          }
+        });
+
+        setState(() {
+          _isRunning = true;
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _isLoading = false;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to start workout. Please try again.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      // Check if widget is still mounted after async operation
+      if (!mounted) return;
+
+      setState(() {
+        _isLoading = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: ${e.toString()}'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 5),
+        ),
+      );
+    }
+  }
+
   void _pauseWorkout() {
     // Pause timer
     _timer?.cancel();
-    
+
     setState(() {
       _isRunning = false;
     });
-    
-    debugPrint('Workout paused');
+
+    // Workout paused successfully
   }
-  
-  void _stopWorkout() async {
+
+  void _stopWorkout() {
     // Stop timer
     _timer?.cancel();
     _timer = null;
-    
+
     // Stop workout tracking
     final workout = _workoutTracker.stopWorkout();
-    
+
     if (workout != null) {
       debugPrint('Workout completed: ${workout.totalDistance.toStringAsFixed(2)} meters');
-      
-      // Save workout to local storage
-      final storageService = WorkoutStorageService();
-      final saved = await storageService.saveWorkout(workout);
-      
-      if (saved) {
-        debugPrint('Workout saved to local storage');
-      } else {
-        debugPrint('Failed to save workout to local storage');
-      }
-      
-      // Check if widget is still mounted after async operation
-      if (!mounted) return;
-      
+
       // Navigate to result screen with workout data
       Navigator.pushReplacement(
         context,
@@ -110,21 +153,21 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
       );
     }
   }
-  
+
   @override
   void dispose() {
     _timer?.cancel();
     _workoutTracker.stopWorkout();
     super.dispose();
   }
-  
+
   @override
   Widget build(BuildContext context) {
     // Get current stats from workout tracker
     final distance = _workoutTracker.totalDistance;
     final formattedPace = _workoutTracker.formattedPace;
     final currentPosition = _workoutTracker.lastPosition ?? _currentPosition;
-    
+
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
@@ -169,7 +212,8 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                     children: [
                       _buildStatColumn('PACE', formattedPace),
                       _buildStatColumn('TIME', _formatTime(_seconds)),
-                      _buildStatColumn('CALORIES', '${_calculateCalories(distance)}'),
+                      _buildStatColumn(
+                          'CALORIES', '${_calculateCalories(distance)}'),
                     ],
                   ),
                   const SizedBox(height: 40),
@@ -226,29 +270,37 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                _isRunning
-                    ? _buildControlButton(
-                        Icons.pause,
-                        Colors.white,
-                        () {
-                          _pauseWorkout();
-                        },
+                _isLoading
+                    ? const CircularProgressIndicator(
+                        color: Colors.white,
+                      )
+                    : (_isRunning
+                        ? _buildControlButton(
+                            Icons.pause,
+                            Colors.white,
+                            () {
+                              _pauseWorkout();
+                            },
+                          )
+                        : _buildControlButton(
+                            Icons.play_arrow,
+                            Colors.green,
+                            () {
+                              _startWorkout();
+                            },
+                          )),
+                const SizedBox(width: 20),
+                _isLoading
+                    ? const CircularProgressIndicator(
+                        color: Colors.white,
                       )
                     : _buildControlButton(
-                        Icons.play_arrow,
-                        Colors.green,
+                        Icons.stop,
+                        Colors.red,
                         () {
-                          _startWorkout();
+                          _stopWorkout();
                         },
                       ),
-                const SizedBox(width: 20),
-                _buildControlButton(
-                  Icons.stop,
-                  Colors.red,
-                  () {
-                    _stopWorkout();
-                  },
-                ),
               ],
             ),
           ),
@@ -280,7 +332,8 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     );
   }
 
-  Widget _buildControlButton(IconData icon, Color color, VoidCallback onPressed) {
+  Widget _buildControlButton(
+      IconData icon, Color color, VoidCallback onPressed) {
     return ElevatedButton(
       onPressed: onPressed,
       style: ElevatedButton.styleFrom(
@@ -301,7 +354,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     final remainingSeconds = seconds % 60;
     return '$minutes:${remainingSeconds.toString().padLeft(2, '0')}';
   }
-  
+
   int _calculateCalories(double distanceInMeters) {
     // Simple estimation: 1 km running burns about 60 calories
     return ((distanceInMeters / 1000) * 60).round();

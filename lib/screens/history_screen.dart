@@ -46,7 +46,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
         _errorMessage = 'Failed to load workouts: $e';
         _isLoading = false;
       });
-      debugPrint('Error loading workouts: $e');
+      // Error handled with UI feedback
     }
   }
 
@@ -152,10 +152,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
   Widget _buildWorkoutListItem(WorkoutModel workout) {
     // Format date: e.g., "Mar 29, 2025"
     final date = workout.startTime.toLocal();
-    final formattedDate = '${_getMonthAbbreviation(date.month)} ${date.day}, ${date.year}';
-    
+    final formattedDate =
+        '${_getMonthAbbreviation(date.month)} ${date.day}, ${date.year}';
+
     // Format time: e.g., "10:30 AM"
-    final hour = date.hour > 12 ? date.hour - 12 : (date.hour == 0 ? 12 : date.hour);
+    final hour =
+        date.hour > 12 ? date.hour - 12 : (date.hour == 0 ? 12 : date.hour);
     final minute = date.minute.toString().padLeft(2, '0');
     final period = date.hour >= 12 ? 'PM' : 'AM';
     final formattedTime = '$hour:$minute $period';
@@ -262,8 +264,18 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   String _getMonthAbbreviation(int month) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
     ];
     return months[month - 1];
   }
