@@ -38,7 +38,6 @@ class NikeApp extends StatelessWidget {
       routes: {
         '/': (context) => const HomeScreen(),
         '/workout': (context) => const WorkoutScreen(),
-        '/result': (context) => const ResultScreen(),
         '/history': (context) => const HistoryScreen(),
         '/settings': (context) => const SettingsScreen(),
       },
