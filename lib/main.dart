@@ -1,7 +1,14 @@
 import 'package:flutter/material.dart';
 import 'screens/home_screen.dart';
+import 'screens/settings_screen.dart';
+import 'utils/debug_state.dart';
 
-void main() => runApp(const NikeApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  // Load debug state on app start
+  await DebugState().loadState();
+  runApp(const NikeApp());
+}
 
 class NikeApp extends StatelessWidget {
   const NikeApp({super.key});
@@ -24,7 +31,11 @@ class NikeApp extends StatelessWidget {
           ),
         ),
       ),
-      home: const HomeScreen(),
+      initialRoute: '/',
+      routes: {
+        '/': (context) => const HomeScreen(),
+        '/settings': (context) => const SettingsScreen(),
+      },
     );
   }
 }
