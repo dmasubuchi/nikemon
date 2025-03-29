@@ -11,25 +11,25 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
-  
+
   // List of screens to navigate between
   final List<Widget> _screens = [
     const WorkoutScreen(),
     const HistoryScreen(),
   ];
-  
+
   // Screen titles
   final List<String> _titles = [
     'Workout',
     'History',
   ];
-  
+
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
     });
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
