@@ -29,16 +29,8 @@ flutter_ios_podfile_setup
 
 target 'Runner' do
   use_frameworks!
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
   
-  pod 'GoogleMaps'  # GoogleMaps SDKを明示的に追加
-=======
-=======
->>>>>>> Stashed changes
-  pod 'GoogleMaps'
-
->>>>>>> Stashed changes
+  pod 'GoogleMaps'  # Add GoogleMaps SDK explicitly
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
   target 'RunnerTests' do
     inherit! :search_paths
